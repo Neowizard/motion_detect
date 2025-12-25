@@ -2,11 +2,7 @@ import cv2
 
 
 class MotionDetector:
-    def __init__(self,
-                 min_area=400,
-                 history=300,
-                 var_threshold=25):
-
+    def __init__(self, min_area=400, history=300, var_threshold=25):
         self.min_area = min_area
         self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(
             history=history,
@@ -15,12 +11,6 @@ class MotionDetector:
         )
 
     def process_frame(self, frame):
-        """
-        Parameters:
-            frame: numpy array (BGR) - single frame from pyav (format="bgr24")
-        Returns:
-            tuple (x, y, w, h)  - bounding box motion regions
-        """
         fg_mask = self.bg_subtractor.apply(frame)
 
         _, fg_mask = cv2.threshold(fg_mask, 230, 255, cv2.THRESH_BINARY)

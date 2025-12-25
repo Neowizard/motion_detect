@@ -7,6 +7,7 @@ import numpy
 from detector import motion_detection
 
 
+EOS_MESSAGE = [json.dumps(None).encode('utf-8'), b'', b'']
 def main():
     motion_detector = motion_detection.MotionDetector()
     context = zmq.Context()
@@ -17,11 +18,15 @@ def main():
     display_socket = context.socket(zmq.PUSH)
     display_socket.bind("ipc:///tmp/display")
 
-    while True:
-        try:
+    try:
+        while True:
             print("Waiting for frames from ipc:///tmp/detector")
             header_bytes, frame_bytes = stream_socket.recv_multipart()
             header = json.loads(header_bytes.decode("utf-8"))
+            if header is None:
+                print("Received empty header, exiting.")
+                display_socket.send_multipart(EOS_MESSAGE)
+                break
             print(f"Received frame pts={header.get('pts')} time={header.get('time')} shape={header.get('shape')}")
 
             shape = tuple(header["shape"])
@@ -37,12 +42,13 @@ def main():
             print("Sending frame + ROIs to ipc:///tmp/display")
             display_socket.send_multipart([header_bytes, frame_bytes, rois_bytes])
 
-        except Exception as e:
-            traceback.print_exc()
-            print(f"Error: {e}")
-            break
-
-    context.term()
+    except Exception as e:
+        traceback.print_exc()
+        print(f"Error: {e}")
+    finally:
+        stream_socket.close()
+        display_socket.close()
+        context.term()
 
 
 if __name__ == "__main__":

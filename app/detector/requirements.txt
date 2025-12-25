@@ -1,4 +1,0 @@
-fastapi==0.125.0
-pydantic==2.12.5
-uvicorn==0.38.0
-setuptools==44.1.1

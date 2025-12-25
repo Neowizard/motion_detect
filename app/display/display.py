@@ -5,6 +5,7 @@ import cv2
 import zmq
 import numpy
 
+
 def main():
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
@@ -37,31 +38,9 @@ def main():
         rois = json.loads(rois_bytes.decode("utf-8"))
 
         print(f"Drawing {len(rois)} ROIs on frame")
-        h_img, w_img = frame.shape[:2]
-        for x, y, w, h in rois:
-            x, y, w, h = int(x), int(y), int(w), int(h)
-            x1 = max(0, min(x, w_img - 1))
-            y1 = max(0, min(y, h_img - 1))
-            x2 = max(0, min(x + w, w_img - 1))
-            y2 = max(0, min(y + h, h_img - 1))
-            if x2 > x1 and y2 > y1:
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        draw_rois(frame, rois)
 
-        t = header.get("time")
-        if isinstance(t, (int, float)):
-            time_label = f"t={float(t):.3f}s"
-        else:
-            time_label = f"pts={header.get('pts', 'N/A')}"
-        cv2.putText(
-            frame,
-            time_label,
-            (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.8,
-            (255, 255, 255),
-            2,
-            cv2.LINE_AA,
-        )
+        add_timestamp(frame, header)
 
         print("Displaying frame")
         cv2.imshow("Stream with ROIs", frame)
@@ -73,6 +52,25 @@ def main():
     context.term()
 
 
+def draw_rois(frame, rois):
+    h_img, w_img = frame.shape[:2]
+    for x, y, w, h in rois:
+        x, y, w, h = int(x), int(y), int(w), int(h)
+        x1 = max(0, min(x, w_img - 1))
+        y1 = max(0, min(y, h_img - 1))
+        x2 = max(0, min(x + w, w_img - 1))
+        y2 = max(0, min(y + h, h_img - 1))
+        if x2 > x1 and y2 > y1:
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+
+
+
+def add_timestamp(frame, header):
+    t = header.get("time")
+    time_label = f"t={float(t):.3f}s"
+    cv2.putText(frame, time_label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
+                0.8, (255, 255, 255), 2, cv2.LINE_AA)
+
+
 if __name__ == "__main__":
     main()
-

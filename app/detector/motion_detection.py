@@ -3,9 +3,9 @@ import cv2
 
 class MotionDetector:
     def __init__(self,
-                 min_area=400,  # minimum area to consider as motion
-                 history=300,  # how many frames to remember
-                 var_threshold=30):  # sensitivity to motion
+                 min_area=400,
+                 history=300,
+                 var_threshold=25):
 
         self.min_area = min_area
         self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(
@@ -28,6 +28,7 @@ class MotionDetector:
         fg_mask = cv2.morphologyEx(fg_mask, cv2.MORPH_OPEN, kernel, iterations=1)
 
         contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        filtered = [c for c in contours if cv2.contourArea(c) >= self.min_area]
 
-        rois = [cv2.boundingRect(c) for c in contours]
+        rois = [cv2.boundingRect(c) for c in filtered]
         return rois

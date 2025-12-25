@@ -38,7 +38,12 @@ def main():
         rois = json.loads(rois_bytes.decode("utf-8"))
 
         print(f"Drawing {len(rois)} ROIs on frame")
-        draw_rois(frame, rois)
+        for roi in rois:
+            x1, y1, x2, y2 = roi[0], roi[1], roi[0] + roi[2], roi[1] + roi[3]
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            roi_pixels = frame[y1:y2, x1:x2]
+            roi_blurred = cv2.GaussianBlur(roi_pixels, (15, 15), 4)
+            frame[y1:y2, x1:x2] = roi_blurred
 
         add_timestamp(frame, header)
 
@@ -50,19 +55,6 @@ def main():
     cv2.destroyAllWindows()
     socket.close()
     context.term()
-
-
-def draw_rois(frame, rois):
-    h_img, w_img = frame.shape[:2]
-    for x, y, w, h in rois:
-        x, y, w, h = int(x), int(y), int(w), int(h)
-        x1 = max(0, min(x, w_img - 1))
-        y1 = max(0, min(y, h_img - 1))
-        x2 = max(0, min(x + w, w_img - 1))
-        y2 = max(0, min(y + h, h_img - 1))
-        if x2 > x1 and y2 > y1:
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-
 
 
 def add_timestamp(frame, header):
